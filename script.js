@@ -112,6 +112,10 @@ function recalc() {
   const otherWage = (other / 60) * otherRate;
   const totalWage = lessonWage + supportWage + otherWage;
 
+  // 平均時給の計算
+  const totalMinutes = lesson + support + other;
+  const averageHourlyRate = totalMinutes > 0 ? (totalWage / (totalMinutes / 60)) : 0;
+
   // 勤務時間の結果表示
   let html = `<div class="text-lg">勤務時間: ${formatMinutes(diff)}</div>`;
   if (other < 0) {
@@ -148,7 +152,10 @@ function recalc() {
       </div>
       <div class="flex justify-between items-center p-3 mt-4 bg-gray-50 rounded-md">
         <div class="font-bold text-lg">合計</div>
-        <div class="font-bold text-lg text-primary">${formatCurrency(totalWage)}</div>
+        <div class="text-right">
+          <div class="font-bold text-lg text-primary">${formatCurrency(totalWage)}</div>
+          <div class="text-sm text-gray-600">平均時給: ${formatCurrency(Math.round(averageHourlyRate))}／時</div>
+        </div>
       </div>
     </div>
   `;

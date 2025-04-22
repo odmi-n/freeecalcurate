@@ -17,6 +17,25 @@
       }
     }
   </script>
+  <style>
+    /* スライダーのスタイル調整 */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
   <div class="container mx-auto px-4 py-8 max-w-3xl">
@@ -84,6 +103,9 @@
     <div id="result" class="bg-blue-50 p-4 rounded-lg text-blue-800 font-medium mb-6"></div>
     <div id="wage-result" class="bg-white p-6 rounded-lg shadow-md"></div>
   </div>
+  
+  <!-- 月の稼働日数の初期設定（非表示） -->
+  <input type="hidden" id="work-days" value="8">
 
   <script src="script.js"></script>
 </body>

@@ -50,6 +50,11 @@ function loadSettings() {
     if (support) document.getElementById('support-rate').value = support;
     if (other) document.getElementById('other-rate').value = other;
   }
+  
+  // 月の稼働日数を復元
+  if (settings.workDaysPerMonth !== undefined) {
+    document.getElementById('work-days').value = settings.workDaysPerMonth;
+  }
 }
 
 // ローカルストレージに設定を保存
@@ -59,7 +64,8 @@ function saveSettings() {
       lesson: document.getElementById('lesson-rate').value,
       support: document.getElementById('support-rate').value,
       other: document.getElementById('other-rate').value
-    }
+    },
+    workDaysPerMonth: document.getElementById('work-days').value
   };
   
   localStorage.setItem('workTimeSettings', JSON.stringify(settings));
@@ -115,6 +121,10 @@ function recalc() {
   // 平均時給の計算
   const totalMinutes = lesson + support + other;
   const averageHourlyRate = totalMinutes > 0 ? (totalWage / (totalMinutes / 60)) : 0;
+  
+  // 月収の計算
+  const workDaysPerMonth = parseInt(document.getElementById('work-days').value) || 8;
+  const estimatedMonthlyIncome = totalWage * workDaysPerMonth;
 
   // 勤務時間の結果表示
   let html = `<div class="text-lg">勤務時間: ${formatMinutes(diff)}</div>`;
@@ -157,9 +167,32 @@ function recalc() {
           <div class="text-sm text-gray-600">平均時給: ${formatCurrency(Math.round(averageHourlyRate))}／時</div>
         </div>
       </div>
+      <div class="flex justify-between items-center p-3 mt-2 bg-blue-50 rounded-md">
+        <div class="font-medium">見込み月収（${workDaysPerMonth}日/月）</div>
+        <div class="font-bold text-blue-600">${formatCurrency(estimatedMonthlyIncome)}</div>
+      </div>
+      <div class="mt-2">
+        <label for="work-days-range" class="block text-sm font-medium text-gray-600 mb-1">月の稼働日数:</label>
+        <div class="flex items-center">
+          <input type="range" id="work-days-range" min="1" max="15" value="${workDaysPerMonth}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+          <span id="work-days-value" class="ml-2 text-sm font-medium text-gray-700 min-w-[3rem] text-center">${workDaysPerMonth}日</span>
+        </div>
+      </div>
     </div>
   `;
   document.getElementById('wage-result').innerHTML = wageHtml;
+  
+  // スライダーに現在の値を設定
+  const slider = document.getElementById('work-days-range');
+  if (slider) {
+    slider.value = workDaysPerMonth;
+  }
+  
+  // 稼働日数スライダーの値表示を更新
+  const daysValueElement = document.getElementById('work-days-value');
+  if (daysValueElement) {
+    daysValueElement.textContent = workDaysPerMonth + '日';
+  }
   
   // 設定をローカルストレージに保存
   saveSettings();
@@ -202,6 +235,69 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
+  // 月の稼働日数のデフォルト値を設定
+  if (!document.getElementById('work-days').value) {
+    document.getElementById('work-days').value = 8;
+  }
+  
+  // 出勤・退勤時間のデフォルト値を設定（空の場合）
+  if (!document.getElementById('start').value) {
+    document.getElementById('start').value = '09:00';
+  }
+  if (!document.getElementById('end').value) {
+    document.getElementById('end').value = '17:30';
+  }
+  
   // 初期計算
   recalc();
-}); 
+  
+  // 稼働日数スライダーのイベントリスナー設定
+  document.body.addEventListener('input', function(e) {
+    // イベント委任パターンを使用してスライダーの変更を検知
+    if (e.target && e.target.id === 'work-days-range') {
+      // スライダーの値を隠しフィールドに反映
+      const daysValue = e.target.value;
+      document.getElementById('work-days').value = daysValue;
+      
+      // 表示を更新
+      document.getElementById('work-days-value').textContent = daysValue + '日';
+      
+      // 既に計算済みの日次賃金から月収を直接計算してスムーズに更新
+      updateMonthlyIncome(daysValue);
+    }
+  });
+});
+
+// 月収の直接更新（スライダー操作時の軽量更新用）
+function updateMonthlyIncome(workDaysPerMonth) {
+  // 現在の日次賃金を取得
+  const lessonRate = parseInt(document.getElementById('lesson-rate').value) || 0;
+  const supportRate = parseInt(document.getElementById('support-rate').value) || 0;
+  const otherRate = parseInt(document.getElementById('other-rate').value) || 0;
+  
+  const lesson = parseInt(document.getElementById('lesson').value) || 0;
+  const support = parseInt(document.getElementById('support').value) || 0;
+  const other = parseInt(document.getElementById('other').value) || 0;
+
+  // 各業務の賃金計算
+  const lessonWage = (lesson / 60) * lessonRate;
+  const supportWage = (support / 60) * supportRate;
+  const otherWage = (other / 60) * otherRate;
+  const totalWage = lessonWage + supportWage + otherWage;
+  
+  // 月収の計算
+  const estimatedMonthlyIncome = totalWage * workDaysPerMonth;
+  
+  // 月収表示の要素を取得
+  const incomeElement = document.querySelector('.bg-blue-50 .font-bold');
+  const daysInfoElement = document.querySelector('.bg-blue-50 .font-medium');
+  
+  if (incomeElement && daysInfoElement) {
+    // 月収表示を更新
+    incomeElement.textContent = formatCurrency(estimatedMonthlyIncome);
+    daysInfoElement.textContent = `見込み月収（${workDaysPerMonth}日/月）`;
+  }
+  
+  // 設定をローカルストレージに保存
+  saveSettings();
+} 

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<!-- This tool is for calculating the amount of work time, and is better than freee. I wonder why freee has been used, poor sense and complicated. -->
+<!-- Dickhead who adopted, and confirmed freee, It is not considered what we should do, only "looks real" rule is adopted. It doesn't make any sense. Such an idiot -->
+<head>
+  <meta charset="UTF-8">
+  <title>freee1分単位計算だるツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#64748b',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* スライダーのスタイル調整 */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+    }
+  </style>
+  <link rel="icon" href="attendance.png" type="image/png">
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">BeEn分単位計算ツール</h1>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="start" class="block text-sm font-medium text-gray-700 mb-1">出勤時間:</label>
+          <input type="text" id="start" class="w-full md:w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="0900">
+        </div>
+
+        <div>
+          <label for="end" class="block text-sm font-medium text-gray-700 mb-1">退勤時間:</label>
+          <input type="text" id="end" class="w-full md:w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="1730">
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">業務別の作業時間と時給</h2>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+          <div class="flex items-center">
+            <label for="lesson" class="block text-sm font-medium text-gray-700 w-24">授業:</label>
+            <input type="number" id="lesson" min="0" step="30" value="0" class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <span class="ml-2 text-sm text-gray-600">分</span>
+          </div>
+          <div class="flex items-center">
+            <label for="lesson-rate" class="block text-sm font-medium text-gray-700 w-24">時給:</label>
+            <input type="number" id="lesson-rate" min="0" value="1000" class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <span class="ml-2 text-sm text-gray-600">円</span>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+          <div class="flex items-center">
+            <label for="support" class="block text-sm font-medium text-gray-700 w-24">サポート:</label>
+            <input type="number" id="support" min="0" step="30" value="0" class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <span class="ml-2 text-sm text-gray-600">分</span>
+          </div>
+          <div class="flex items-center">
+            <label for="support-rate" class="block text-sm font-medium text-gray-700 w-24">時給:</label>
+            <input type="number" id="support-rate" min="0" value="900" class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <span class="ml-2 text-sm text-gray-600">円</span>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+          <div class="flex items-center">
+            <label for="other" class="block text-sm font-medium text-gray-700 w-24">その他業務:</label>
+            <input type="number" id="other" readonly class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100">
+            <span class="ml-2 text-sm text-gray-600">分</span>
+          </div>
+          <div class="flex items-center">
+            <label for="other-rate" class="block text-sm font-medium text-gray-700 w-24">時給:</label>
+            <input type="number" id="other-rate" min="0" value="800" class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <span class="ml-2 text-sm text-gray-600">円</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="bg-blue-50 p-4 rounded-lg text-blue-800 font-medium mb-6"></div>
+    <div id="wage-result" class="bg-white p-6 rounded-lg shadow-md"></div>
+  </div>
+  
+  <!-- 月の稼働日数の初期設定（非表示） -->
+  <input type="hidden" id="work-days" value="8">
+
+  <script src="test.js"></script>
+</body>
+</html>

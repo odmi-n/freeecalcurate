@@ -39,32 +39,154 @@ function formatCurrency(amount) {
   return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
 }
 
+// 業務タイプごとのデフォルト時給
+const defaultHourlyRates = {
+  '授業': 1000,
+  'サポート': 900,
+  '授業前後の業務': 900,
+  '開発：ワオラボサイト': 1200,
+  '開発：ワオラボスプレッセンス': 1200,
+  '開発：ワオラボ以外': 1000,
+  '私用外出・私用休憩': 0,
+  'その他業務': 800
+};
+
+// その他業務行の参照
+let otherTaskRow = null;
+
+// 新しい業務行を追加
+function addTaskRow(taskType = '授業', minutes = 0, rate = null, isOtherTask = false) {
+  const container = document.getElementById('task-container');
+  
+  // その他業務の場合は専用のテンプレートを使用
+  const template = isOtherTask 
+    ? document.getElementById('other-task-template') 
+    : document.getElementById('task-row-template');
+    
+  const clone = template.content.cloneNode(true);
+  
+  const row = clone.querySelector('.task-row');
+  const minutesInput = clone.querySelector('.task-minutes');
+  const rateInput = clone.querySelector('.task-rate');
+  
+  // 値を設定
+  minutesInput.value = minutes;
+  
+  // 時給が指定されていない場合はデフォルト値を使用
+  if (rate === null) {
+    rateInput.value = defaultHourlyRates[taskType] || 800;
+  } else {
+    rateInput.value = rate;
+  }
+  
+  if (!isOtherTask) {
+    const typeSelect = clone.querySelector('.task-type');
+    const deleteButton = clone.querySelector('.delete-task');
+    
+    typeSelect.value = taskType;
+    
+    // 業務タイプが変更されたときの処理
+    typeSelect.addEventListener('change', function() {
+      // 時給のデフォルト値を設定（ユーザーが手動で変更していない場合のみ）
+      if (!rateInput.dataset.userModified) {
+        rateInput.value = defaultHourlyRates[this.value] || 800;
+      }
+      recalc();
+    });
+    
+    // 時間または時給が変更されたときの処理
+    minutesInput.addEventListener('input', recalc);
+    rateInput.addEventListener('input', function() {
+      // ユーザーが時給を手動で変更したことを記録
+      this.dataset.userModified = 'true';
+      recalc();
+    });
+    
+    // 行の削除処理
+    deleteButton.addEventListener('click', function() {
+      row.remove();
+      recalc();
+    });
+  } else {
+    // その他業務の時給変更
+    rateInput.addEventListener('input', function() {
+      this.dataset.userModified = 'true';
+      recalc();
+    });
+    
+    // その他業務行を参照として保持
+    otherTaskRow = row;
+  }
+  
+  container.appendChild(clone);
+  return row;
+}
+
+// その他業務の時間を更新
+function updateOtherTaskTime(minutes) {
+  if (otherTaskRow) {
+    const minutesInput = otherTaskRow.querySelector('.task-minutes');
+    minutesInput.value = Math.max(0, minutes);
+  }
+}
+
 // ローカルストレージから設定を読み込む
 function loadSettings() {
   const settings = JSON.parse(localStorage.getItem('workTimeSettings') || '{}');
   
-  // 時給の設定を復元
-  if (settings.hourlyRates) {
-    const { lesson, support, other } = settings.hourlyRates;
-    if (lesson) document.getElementById('lesson-rate').value = lesson;
-    if (support) document.getElementById('support-rate').value = support;
-    if (other) document.getElementById('other-rate').value = other;
+  // その他業務行を先に追加（常に存在させる）
+  addTaskRow('その他業務', 0, 800, true);
+  
+  // 業務設定を復元
+  let hasOtherTask = false;
+  if (settings.tasks && Array.isArray(settings.tasks)) {
+    settings.tasks.forEach(task => {
+      if (task.type === 'その他業務') {
+        // その他業務は自動計算するので、時給のみ復元
+        const rateInput = otherTaskRow.querySelector('.task-rate');
+        rateInput.value = task.rate;
+        hasOtherTask = true;
+      } else {
+        addTaskRow(task.type, task.minutes, task.rate);
+      }
+    });
+  }
+  
+  // デフォルトの業務行を追加（初回のみ）
+  if (!settings.tasks || !settings.tasks.length) {
+    addTaskRow('授業', 0);
+    addTaskRow('サポート', 0);
   }
   
   // 月の稼働日数を復元
   if (settings.workDaysPerMonth !== undefined) {
     document.getElementById('work-days').value = settings.workDaysPerMonth;
   }
+  
+  // 初期計算を実行
+  recalc();
 }
 
 // ローカルストレージに設定を保存
 function saveSettings() {
+  const tasks = [];
+  document.querySelectorAll('.task-row').forEach(row => {
+    const isOtherTask = row.classList.contains('other-task-row');
+    let taskType = 'その他業務';
+    
+    if (!isOtherTask) {
+      taskType = row.querySelector('.task-type').value;
+    }
+    
+    tasks.push({
+      type: taskType,
+      minutes: parseInt(row.querySelector('.task-minutes').value) || 0,
+      rate: parseInt(row.querySelector('.task-rate').value) || 0
+    });
+  });
+  
   const settings = {
-    hourlyRates: {
-      lesson: document.getElementById('lesson-rate').value,
-      support: document.getElementById('support-rate').value,
-      other: document.getElementById('other-rate').value
-    },
+    tasks: tasks,
     workDaysPerMonth: document.getElementById('work-days').value
   };
   
@@ -98,40 +220,70 @@ function recalc() {
     return;
   }
 
-  let diff = endMin - startMin;
-  if (diff < 0) diff += 24 * 60; // 翌日退勤
+  let totalWorkMinutes = endMin - startMin;
+  if (totalWorkMinutes < 0) totalWorkMinutes += 24 * 60; // 翌日退勤
 
-  const lesson = parseInt(document.getElementById('lesson').value) || 0;
-  const support = parseInt(document.getElementById('support').value) || 0;
-  const other = diff - (lesson + support);
+  // 業務別の時間と賃金を集計（その他業務を除く）
+  const taskRows = document.querySelectorAll('.task-row:not(.other-task-row)');
+  let assignedMinutes = 0;
+  let totalWage = 0;
+  const taskDetails = [];
 
-  document.getElementById('other').value = other;
+  taskRows.forEach(row => {
+    const taskType = row.querySelector('.task-type').value;
+    const minutes = parseInt(row.querySelector('.task-minutes').value) || 0;
+    const rate = parseInt(row.querySelector('.task-rate').value) || 0;
+    
+    assignedMinutes += minutes;
+    const wage = (minutes / 60) * rate;
+    
+    taskDetails.push({
+      type: taskType,
+      minutes: minutes,
+      rate: rate,
+      wage: wage
+    });
+  });
 
-  // 時給の取得
-  const lessonRate = parseInt(document.getElementById('lesson-rate').value) || 0;
-  const supportRate = parseInt(document.getElementById('support-rate').value) || 0;
-  const otherRate = parseInt(document.getElementById('other-rate').value) || 0;
-
-  // 各業務の賃金計算（時給 × 時間）
-  const lessonWage = (lesson / 60) * lessonRate;
-  const supportWage = (support / 60) * supportRate;
-  const otherWage = (other / 60) * otherRate;
-  const totalWage = lessonWage + supportWage + otherWage;
+  // その他業務の時間を計算
+  const otherTaskMinutes = Math.max(0, totalWorkMinutes - assignedMinutes);
+  
+  // その他業務の時間を更新
+  updateOtherTaskTime(otherTaskMinutes);
+  
+  // その他業務の賃金を計算
+  const otherTaskRate = parseInt(otherTaskRow.querySelector('.task-rate').value) || 0;
+  const otherTaskWage = (otherTaskMinutes / 60) * otherTaskRate;
+  
+  // その他業務を集計に追加
+  totalWage = taskDetails.reduce((sum, task) => sum + task.wage, 0) + otherTaskWage;
+  assignedMinutes += otherTaskMinutes; // 実際は常に合計と等しくなる
+  
+  // その他業務を詳細に追加
+  taskDetails.push({
+    type: 'その他業務',
+    minutes: otherTaskMinutes,
+    rate: otherTaskRate,
+    wage: otherTaskWage
+  });
+  
+  // 総勤務時間と未割当時間の表示更新
+  document.getElementById('total-time').textContent = formatMinutes(totalWorkMinutes);
+  document.getElementById('unassigned-time').textContent = formatMinutes(totalWorkMinutes - assignedMinutes);
 
   // 平均時給の計算
-  const totalMinutes = lesson + support + other;
-  const averageHourlyRate = totalMinutes > 0 ? (totalWage / (totalMinutes / 60)) : 0;
+  const averageHourlyRate = assignedMinutes > 0 ? (totalWage / (assignedMinutes / 60)) : 0;
   
   // 月収の計算
   const workDaysPerMonth = parseInt(document.getElementById('work-days').value) || 8;
   const estimatedMonthlyIncome = totalWage * workDaysPerMonth;
 
   // 勤務時間の結果表示
-  let html = `<div class="text-lg">勤務時間: ${formatMinutes(diff)}</div>`;
-  if (other < 0) {
-    html += '<div class="mt-2 p-3 bg-red-100 text-red-800 rounded border border-red-200">※授業＋サポートが勤務時間を超えています</div>';
+  let html = `<div class="text-lg">勤務時間: ${formatMinutes(totalWorkMinutes)}</div>`;
+  if (otherTaskMinutes < 0) {
+    html += '<div class="mt-2 p-3 bg-red-100 text-red-800 rounded border border-red-200">※業務時間の合計が勤務時間を超えています</div>';
   } else {
-    html += `<div class="text-sm mt-1">その他業務: ${formatMinutes(other)}</div>`;
+    html += `<div class="text-sm mt-1">その他業務: ${formatMinutes(otherTaskMinutes)}</div>`;
   }
   document.getElementById('result').innerHTML = html;
   
@@ -139,27 +291,27 @@ function recalc() {
   let wageHtml = `
     <h3 class="text-xl font-semibold text-gray-800 mb-4">賃金計算</h3>
     <div class="space-y-2">
-      <div class="flex justify-between items-center p-2 border-b">
-        <div>授業</div>
+  `;
+  
+  // 各業務の賃金詳細
+  taskDetails.forEach(task => {
+    // その他業務は特別なスタイルを適用
+    const isOtherTask = task.type === 'その他業務';
+    const rowClass = isOtherTask ? 'bg-gray-50' : '';
+    
+    wageHtml += `
+      <div class="flex justify-between items-center p-2 border-b ${rowClass}">
+        <div>${task.type}</div>
         <div class="text-right">
-          <div class="text-sm text-gray-600">${formatMinutes(lesson)} × ${lessonRate}円/時</div>
-          <div class="font-medium">${formatCurrency(lessonWage)}</div>
+          <div class="text-sm text-gray-600">${formatMinutes(task.minutes)} × ${task.rate}円/時</div>
+          <div class="font-medium">${formatCurrency(task.wage)}</div>
         </div>
       </div>
-      <div class="flex justify-between items-center p-2 border-b">
-        <div>サポート</div>
-        <div class="text-right">
-          <div class="text-sm text-gray-600">${formatMinutes(support)} × ${supportRate}円/時</div>
-          <div class="font-medium">${formatCurrency(supportWage)}</div>
-        </div>
-      </div>
-      <div class="flex justify-between items-center p-2 border-b">
-        <div>その他業務</div>
-        <div class="text-right">
-          <div class="text-sm text-gray-600">${formatMinutes(other)} × ${otherRate}円/時</div>
-          <div class="font-medium">${formatCurrency(otherWage)}</div>
-        </div>
-      </div>
+    `;
+  });
+  
+  // 合計と月収の表示
+  wageHtml += `
       <div class="flex justify-between items-center p-3 mt-4 bg-gray-50 rounded-md">
         <div class="font-bold text-lg">合計</div>
         <div class="text-right">
@@ -215,8 +367,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ローカルストレージから設定を読み込む
   loadSettings();
   
+  // 「業務を追加」ボタンのイベントリスナー
+  document.getElementById('add-task-btn').addEventListener('click', function() {
+    addTaskRow();
+    recalc();
+  });
+  
   const timeInputs = document.querySelectorAll('#start, #end');
-  const numberInputs = document.querySelectorAll('input[type="number"]:not([readonly])');
   
   // 時間入力フィールドの設定
   timeInputs.forEach(input => {
@@ -224,15 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', handleTimeInput);
     // フォーカスが外れたときだけフォーマットして計算
     input.addEventListener('blur', recalc);
-  });
-  
-  // 数値入力フィールドの設定（リアルタイム計算）
-  numberInputs.forEach(input => {
-    input.addEventListener('input', recalc);
-    // 時給フィールドはフォーカスが外れたときに設定を保存
-    if (input.id.includes('-rate')) {
-      input.addEventListener('blur', saveSettings);
-    }
   });
   
   // 月の稼働日数のデフォルト値を設定
@@ -247,9 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!document.getElementById('end').value) {
     document.getElementById('end').value = '17:30';
   }
-  
-  // 初期計算
-  recalc();
   
   // 稼働日数スライダーのイベントリスナー設定
   document.body.addEventListener('input', function(e) {
@@ -270,23 +415,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 月収の直接更新（スライダー操作時の軽量更新用）
 function updateMonthlyIncome(workDaysPerMonth) {
-  // 現在の日次賃金を取得
-  const lessonRate = parseInt(document.getElementById('lesson-rate').value) || 0;
-  const supportRate = parseInt(document.getElementById('support-rate').value) || 0;
-  const otherRate = parseInt(document.getElementById('other-rate').value) || 0;
-  
-  const lesson = parseInt(document.getElementById('lesson').value) || 0;
-  const support = parseInt(document.getElementById('support').value) || 0;
-  const other = parseInt(document.getElementById('other').value) || 0;
-
-  // 各業務の賃金計算
-  const lessonWage = (lesson / 60) * lessonRate;
-  const supportWage = (support / 60) * supportRate;
-  const otherWage = (other / 60) * otherRate;
-  const totalWage = lessonWage + supportWage + otherWage;
+  // 現在の日次賃金を集計
+  let totalDailyWage = 0;
+  document.querySelectorAll('.task-row').forEach(row => {
+    const minutes = parseInt(row.querySelector('.task-minutes').value) || 0;
+    const rate = parseInt(row.querySelector('.task-rate').value) || 0;
+    totalDailyWage += (minutes / 60) * rate;
+  });
   
   // 月収の計算
-  const estimatedMonthlyIncome = totalWage * workDaysPerMonth;
+  const estimatedMonthlyIncome = totalDailyWage * workDaysPerMonth;
   
   // 月収表示の要素を取得
   const incomeElement = document.querySelector('.bg-blue-50 .font-bold');

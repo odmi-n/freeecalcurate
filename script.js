@@ -79,6 +79,13 @@ function addTaskRow(taskType = '授業', minutes = 0, rate = null, isOtherTask =
     rateInput.value = rate;
   }
   
+  // 私用外出・私用休憩の場合は時給入力を無効化
+  if (taskType === '私用外出・私用休憩') {
+    rateInput.readOnly = true;
+    rateInput.classList.add('bg-gray-100');
+    rateInput.value = '0';
+  }
+  
   if (!isOtherTask) {
     const typeSelect = clone.querySelector('.task-type');
     const deleteButton = clone.querySelector('.delete-task');
@@ -87,10 +94,20 @@ function addTaskRow(taskType = '授業', minutes = 0, rate = null, isOtherTask =
     
     // 業務タイプが変更されたときの処理
     typeSelect.addEventListener('change', function() {
-      // 時給のデフォルト値を設定（ユーザーが手動で変更していない場合のみ）
-      if (!rateInput.dataset.userModified) {
-        rateInput.value = defaultHourlyRates[this.value] || 800;
+      const isBreakType = this.value === '私用外出・私用休憩';
+      
+      // 時給入力フィールドの制御
+      rateInput.readOnly = isBreakType;
+      rateInput.value = isBreakType ? '0' : (defaultHourlyRates[this.value] || 800);
+      
+      // 私用外出・私用休憩の場合は背景色を変更して編集不可であることを示す
+      if (isBreakType) {
+        rateInput.classList.add('bg-gray-100');
+        rateInput.dataset.userModified = 'false';
+      } else {
+        rateInput.classList.remove('bg-gray-100');
       }
+      
       recalc();
     });
     

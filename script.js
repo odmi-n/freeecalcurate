@@ -289,8 +289,8 @@ function recalc() {
   
   // 賃金計算結果の表示
   let wageHtml = `
-    <h3 class="text-xl font-semibold text-gray-800 mb-4">賃金計算</h3>
-    <div class="space-y-2">
+    <h3 class="text-xl font-semibold text-gray-800 mb-6">賃金計算</h3>
+    <div class="space-y-4">
   `;
   
   // 各業務の賃金詳細
@@ -300,11 +300,11 @@ function recalc() {
     const rowClass = isOtherTask ? 'bg-gray-50' : '';
     
     wageHtml += `
-      <div class="flex flex-col md:flex-row justify-between md:items-center p-2 border-b ${rowClass}">
-        <div class="font-medium mb-1 md:mb-0">${task.type}</div>
+      <div class="flex flex-col md:flex-row justify-between md:items-center p-4 border-b ${rowClass}">
+        <div class="font-medium mb-2 md:mb-0">${task.type}</div>
         <div class="text-right">
-          <div class="text-sm text-gray-600">${formatMinutes(task.minutes)} × ${task.rate}円/時</div>
-          <div class="font-medium">${formatCurrency(task.wage)}</div>
+          <div class="text-sm text-gray-600 mb-1">${formatMinutes(task.minutes)} × ${task.rate}円/時</div>
+          <div class="font-medium text-lg">${formatCurrency(task.wage)}</div>
         </div>
       </div>
     `;
@@ -312,22 +312,22 @@ function recalc() {
   
   // 合計と月収の表示
   wageHtml += `
-      <div class="flex flex-col md:flex-row justify-between md:items-center p-3 mt-4 bg-gray-50 rounded-md">
-        <div class="font-bold text-lg mb-1 md:mb-0">合計</div>
+      <div class="flex flex-col md:flex-row justify-between md:items-center p-5 mt-6 bg-gray-50 rounded-md">
+        <div class="font-bold text-xl mb-3 md:mb-0">合計</div>
         <div class="text-right">
-          <div class="font-bold text-lg text-primary">${formatCurrency(totalWage)}</div>
-          <div class="text-sm text-gray-600">平均時給: ${formatCurrency(Math.round(averageHourlyRate))}／時</div>
+          <div class="font-bold text-xl text-primary">${formatCurrency(totalWage)}</div>
+          <div class="text-sm text-gray-600 mt-1">平均時給: ${formatCurrency(Math.round(averageHourlyRate))}／時</div>
         </div>
       </div>
-      <div class="flex flex-col md:flex-row justify-between md:items-center p-3 mt-2 bg-blue-50 rounded-md">
-        <div class="font-medium mb-1 md:mb-0">見込み月収（${workDaysPerMonth}日/月）</div>
-        <div class="font-bold text-blue-600 text-xl">${formatCurrency(estimatedMonthlyIncome)}</div>
+      <div class="flex flex-col md:flex-row justify-between md:items-center p-5 mt-4 bg-blue-50 rounded-md">
+        <div class="font-medium text-lg mb-3 md:mb-0">見込み月収（${workDaysPerMonth}日/月）</div>
+        <div class="font-bold text-blue-600 text-2xl">${formatCurrency(estimatedMonthlyIncome)}</div>
       </div>
-      <div class="mt-3">
-        <label for="work-days-range" class="block text-sm font-medium text-gray-600 mb-2">月の稼働日数:</label>
+      <div class="mt-6 pb-2">
+        <label for="work-days-range" class="block text-sm font-medium text-gray-600 mb-3">月の稼働日数:</label>
         <div class="flex items-center">
           <input type="range" id="work-days-range" min="1" max="15" value="${workDaysPerMonth}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-          <span id="work-days-value" class="ml-3 text-sm font-medium text-gray-700 min-w-[3rem] text-center">${workDaysPerMonth}日</span>
+          <span id="work-days-value" class="ml-4 text-base font-medium text-gray-700 min-w-[3rem] text-center">${workDaysPerMonth}日</span>
         </div>
       </div>
     </div>

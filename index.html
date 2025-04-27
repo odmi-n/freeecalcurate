@@ -37,28 +37,50 @@
       background: #3b82f6;
       cursor: pointer;
     }
+    /* モバイル向け調整 */
+    @media (max-width: 768px) {
+      .task-row {
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+        border-bottom-width: 1px;
+      }
+      .task-type-container {
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      .task-minutes-container {
+        margin-bottom: 10px;
+      }
+      .hourly-rate-container {
+        margin-top: 4px;
+        width: 100%;
+      }
+      input[type="number"] {
+        max-width: 110px;
+      }
+    }
   </style>
   <link rel="icon" href="attendance.png" type="image/png">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
-  <div class="container mx-auto px-4 py-8 max-w-3xl">
+  <div class="container mx-auto px-4 py-6 max-w-3xl">
     <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">BeEn分単位計算ツール</h1>
 
-    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div class="bg-white p-5 rounded-lg shadow-md mb-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label for="start" class="block text-sm font-medium text-gray-700 mb-1">出勤時間:</label>
-          <input type="text" id="start" class="w-full md:w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="0900">
+          <input type="text" id="start" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="0900">
         </div>
 
         <div>
           <label for="end" class="block text-sm font-medium text-gray-700 mb-1">退勤時間:</label>
-          <input type="text" id="end" class="w-full md:w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="1730">
+          <input type="text" id="end" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="1730">
         </div>
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div class="bg-white p-5 rounded-lg shadow-md mb-5">
       <h2 class="text-xl font-semibold text-gray-800 mb-4">業務別の作業時間と時給</h2>
       
       <div id="task-container" class="space-y-4">
@@ -86,8 +108,8 @@
       </div>
     </div>
 
-    <div id="result" class="bg-blue-50 p-4 rounded-lg text-blue-800 font-medium mb-6"></div>
-    <div id="wage-result" class="bg-white p-6 rounded-lg shadow-md"></div>
+    <div id="result" class="bg-blue-50 p-4 rounded-lg text-blue-800 font-medium mb-5"></div>
+    <div id="wage-result" class="bg-white p-5 rounded-lg shadow-md"></div>
   </div>
   
   <!-- 月の稼働日数の初期設定（非表示） -->
@@ -95,9 +117,9 @@
 
   <!-- 業務種別のテンプレート（非表示） -->
   <template id="task-row-template">
-    <div class="task-row grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-b pb-3">
-      <div class="flex items-center">
-        <select class="task-type w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+    <div class="task-row grid grid-cols-1 md:grid-cols-3 gap-3 border-b pb-3">
+      <div class="flex items-center task-type-container">
+        <select class="task-type w-full md:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
           <option value="授業">授業</option>
           <option value="サポート">サポート</option>
           <option value="授業前後の業務">授業前後の業務</option>
@@ -107,18 +129,18 @@
           <option value="私用外出・私用休憩">私用外出・私用休憩</option>
           <option value="その他業務">その他業務</option>
         </select>
-        <button class="delete-task ml-2 text-red-500 hover:text-red-700">
+        <button class="delete-task ml-2 text-red-500 hover:text-red-700 p-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
-      <div class="flex items-center">
+      <div class="flex items-center task-minutes-container">
         <input type="number" class="task-minutes w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" min="0" step="5" value="0">
         <span class="ml-2 text-sm text-gray-600">分</span>
       </div>
-      <div class="flex items-center">
-        <label class="block text-sm font-medium text-gray-700 w-16">時給:</label>
+      <div class="flex items-center hourly-rate-container">
+        <label class="block text-sm font-medium text-gray-700 w-12 md:w-16">時給:</label>
         <input type="number" class="task-rate w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" min="0" value="1000">
         <span class="ml-2 text-sm text-gray-600">円</span>
       </div>
@@ -127,16 +149,16 @@
 
   <!-- その他業務テンプレート（自動計算用） -->
   <template id="other-task-template">
-    <div class="task-row other-task-row grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-b pb-3 bg-gray-50">
-      <div class="flex items-center">
-        <span class="w-40 px-3 py-2 text-gray-700">その他業務</span>
+    <div class="task-row other-task-row grid grid-cols-1 md:grid-cols-3 gap-3 border-b pb-3 bg-gray-50">
+      <div class="flex items-center task-type-container">
+        <span class="w-full md:w-40 px-3 py-2 text-gray-700">その他業務</span>
       </div>
-      <div class="flex items-center">
+      <div class="flex items-center task-minutes-container">
         <input type="number" class="task-minutes w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100" readonly value="0">
         <span class="ml-2 text-sm text-gray-600">分</span>
       </div>
-      <div class="flex items-center">
-        <label class="block text-sm font-medium text-gray-700 w-16">時給:</label>
+      <div class="flex items-center hourly-rate-container">
+        <label class="block text-sm font-medium text-gray-700 w-12 md:w-16">時給:</label>
         <input type="number" class="task-rate w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" min="0" value="800">
         <span class="ml-2 text-sm text-gray-600">円</span>
       </div>

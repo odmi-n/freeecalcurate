@@ -39,20 +39,25 @@ function formatCurrency(amount) {
   return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
 }
 
-// 業務タイプごとのデフォルト時給
-const defaultHourlyRates = {
-  '授業': 1000,
-  'サポート': 900,
-  '授業前後の業務': 900,
-  '開発：ワオラボサイト': 1200,
-  '開発：ワオラボスプレッセンス': 1200,
-  '開発：ワオラボ以外': 1000,
-  '私用外出・私用休憩': 0,
-  'その他業務': 800
-};
+// config.jsから設定を取得
+const defaultHourlyRates = CONFIG.DEFAULT_HOURLY_RATES;
 
 // その他業務行の参照
 let otherTaskRow = null;
+
+// select要素に業務タイプのオプションを設定
+function populateTaskTypeOptions(selectElement) {
+  // 既存のオプションをクリア
+  selectElement.innerHTML = '';
+  
+  // 設定から業務タイプを取得してオプションを生成
+  CONFIG.TASK_TYPES.forEach(taskType => {
+    const option = document.createElement('option');
+    option.value = taskType;
+    option.textContent = taskType;
+    selectElement.appendChild(option);
+  });
+}
 
 // 新しい業務行を追加
 function addTaskRow(taskType = '授業', minutes = 0, rate = null, isOtherTask = false) {
@@ -74,13 +79,14 @@ function addTaskRow(taskType = '授業', minutes = 0, rate = null, isOtherTask =
   
   // 時給が指定されていない場合はデフォルト値を使用
   if (rate === null) {
-    rateInput.value = defaultHourlyRates[taskType] || 800;
+    rateInput.value = CONFIG.DEFAULT_HOURLY_RATES[taskType] || 800;
   } else {
     rateInput.value = rate;
   }
   
-  // 私用外出・私用休憩の場合は時給入力を無効化
-  if (taskType === '私用外出・私用休憩') {
+  // 時給入力の無効化設定
+  const isDisabledTask = CONFIG.DISABLED_HOURLY_RATE_TASKS.includes(taskType);
+  if (isDisabledTask) {
     rateInput.readOnly = true;
     rateInput.classList.add('bg-gray-100');
     rateInput.value = '0';
@@ -90,18 +96,21 @@ function addTaskRow(taskType = '授業', minutes = 0, rate = null, isOtherTask =
     const typeSelect = clone.querySelector('.task-type');
     const deleteButton = clone.querySelector('.delete-task');
     
+    // 業務タイプの選択肢を設定
+    populateTaskTypeOptions(typeSelect);
     typeSelect.value = taskType;
     
     // 業務タイプが変更されたときの処理
     typeSelect.addEventListener('change', function() {
-      const isBreakType = this.value === '私用外出・私用休憩';
+      const selectedTaskType = this.value;
+      const isDisabledTask = CONFIG.DISABLED_HOURLY_RATE_TASKS.includes(selectedTaskType);
       
       // 時給入力フィールドの制御
-      rateInput.readOnly = isBreakType;
-      rateInput.value = isBreakType ? '0' : (defaultHourlyRates[this.value] || 800);
+      rateInput.readOnly = isDisabledTask;
+      rateInput.value = isDisabledTask ? '0' : (defaultHourlyRates[selectedTaskType] || 800);
       
-      // 私用外出・私用休憩の場合は背景色を変更して編集不可であることを示す
-      if (isBreakType) {
+      // 無効化されたタスクの場合は背景色を変更して編集不可であることを示す
+      if (isDisabledTask) {
         rateInput.classList.add('bg-gray-100');
         rateInput.dataset.userModified = 'false';
       } else {
@@ -152,7 +161,7 @@ function loadSettings() {
   const settings = JSON.parse(localStorage.getItem('workTimeSettings') || '{}');
   
   // その他業務行を先に追加（常に存在させる）
-  addTaskRow('その他業務', 0, 800, true);
+  addTaskRow('その他業務', 0, CONFIG.DEFAULT_HOURLY_RATES['その他業務'], true);
   
   // 業務設定を復元
   let hasOtherTask = false;
@@ -171,8 +180,8 @@ function loadSettings() {
   
   // デフォルトの業務行を追加（初回のみ）
   if (!settings.tasks || !settings.tasks.length) {
-    addTaskRow('授業', 0);
-    addTaskRow('サポート', 0);
+    addTaskRow('授業', 0, CONFIG.DEFAULT_HOURLY_RATES['授業']);
+    addTaskRow('サポート', 0, CONFIG.DEFAULT_HOURLY_RATES['サポート']);
   }
   
   // 月の稼働日数を復元
@@ -381,12 +390,14 @@ function handleTimeInput(e) {
 
 // イベントリスナーの設定
 document.addEventListener('DOMContentLoaded', () => {
+  // ローカルストレージの設定をロード
+  
   // ローカルストレージから設定を読み込む
   loadSettings();
   
   // 「業務を追加」ボタンのイベントリスナー
   document.getElementById('add-task-btn').addEventListener('click', function() {
-    addTaskRow();
+    addTaskRow('授業', 0, CONFIG.DEFAULT_HOURLY_RATES['授業']);
     recalc();
   });
   
@@ -458,4 +469,5 @@ function updateMonthlyIncome(workDaysPerMonth) {
   
   // 設定をローカルストレージに保存
   saveSettings();
-} 
+}
+

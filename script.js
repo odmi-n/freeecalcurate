@@ -219,6 +219,42 @@ function saveSettings() {
   localStorage.setItem('workTimeSettings', JSON.stringify(settings));
 }
 
+// スライダーとセレクトボックスの同期
+function syncTimeControls(hourId, minuteId, hourSliderId, minuteSliderId, hourValueId, minuteValueId) {
+  const hourSelect = document.getElementById(hourId);
+  const minuteSelect = document.getElementById(minuteId);
+  const hourSlider = document.getElementById(hourSliderId);
+  const minuteSlider = document.getElementById(minuteSliderId);
+  const hourValue = document.getElementById(hourValueId);
+  const minuteValue = document.getElementById(minuteValueId);
+
+  // セレクトボックスからスライダーへの同期
+  hourSelect.addEventListener('change', () => {
+    hourSlider.value = hourSelect.value;
+    hourValue.textContent = hourSelect.value.padStart(2, '0');
+  });
+
+  minuteSelect.addEventListener('change', () => {
+    minuteSlider.value = minuteSelect.value;
+    minuteValue.textContent = minuteSelect.value.padStart(2, '0');
+  });
+
+  // スライダーからセレクトボックスへの同期
+  hourSlider.addEventListener('input', () => {
+    const value = hourSlider.value.padStart(2, '0');
+    hourSelect.value = value;
+    hourValue.textContent = value;
+    recalc();
+  });
+
+  minuteSlider.addEventListener('input', () => {
+    const value = minuteSlider.value.padStart(2, '0');
+    minuteSelect.value = value;
+    minuteValue.textContent = value;
+    recalc();
+  });
+}
+
 // 時間のセレクトボックスを初期化
 function initializeTimeSelects() {
   const hourSelects = document.querySelectorAll('#start-hour, #end-hour');
@@ -249,6 +285,16 @@ function initializeTimeSelects() {
   document.getElementById('start-minute').value = '00';
   document.getElementById('end-hour').value = '17';
   document.getElementById('end-minute').value = '30';
+
+  // スライダーの初期値を設定
+  document.getElementById('start-hour-slider').value = 9;
+  document.getElementById('start-minute-slider').value = 0;
+  document.getElementById('end-hour-slider').value = 17;
+  document.getElementById('end-minute-slider').value = 30;
+
+  // スライダーとセレクトボックスの同期を設定
+  syncTimeControls('start-hour', 'start-minute', 'start-hour-slider', 'start-minute-slider', 'start-hour-value', 'start-minute-value');
+  syncTimeControls('end-hour', 'end-minute', 'end-hour-slider', 'end-minute-slider', 'end-hour-value', 'end-minute-value');
 }
 
 // セレクトボックスから時間文字列を取得

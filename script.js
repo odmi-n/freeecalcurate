@@ -219,26 +219,60 @@ function saveSettings() {
   localStorage.setItem('workTimeSettings', JSON.stringify(settings));
 }
 
+// 時間のセレクトボックスを初期化
+function initializeTimeSelects() {
+  const hourSelects = document.querySelectorAll('#start-hour, #end-hour');
+  const minuteSelects = document.querySelectorAll('#start-minute, #end-minute');
+
+  // 時間のオプションを生成（0-23時）
+  hourSelects.forEach(select => {
+    for (let hour = 0; hour < 24; hour++) {
+      const option = document.createElement('option');
+      option.value = hour.toString().padStart(2, '0');
+      option.textContent = hour.toString().padStart(2, '0');
+      select.appendChild(option);
+    }
+  });
+
+  // 分のオプションを生成（0-59分）
+  minuteSelects.forEach(select => {
+    for (let minute = 0; minute < 60; minute++) {
+      const option = document.createElement('option');
+      option.value = minute.toString().padStart(2, '0');
+      option.textContent = minute.toString().padStart(2, '0');
+      select.appendChild(option);
+    }
+  });
+
+  // デフォルト値を設定
+  document.getElementById('start-hour').value = '09';
+  document.getElementById('start-minute').value = '00';
+  document.getElementById('end-hour').value = '17';
+  document.getElementById('end-minute').value = '30';
+}
+
+// セレクトボックスから時間文字列を取得
+function getTimeFromSelects(hourId, minuteId) {
+  const hour = document.getElementById(hourId).value;
+  const minute = document.getElementById(minuteId).value;
+  return `${hour}:${minute}`;
+}
+
+// 時間文字列をセレクトボックスに設定
+function setTimeToSelects(timeStr, hourId, minuteId) {
+  if (!timeStr) return;
+  const [hour, minute] = timeStr.split(':');
+  document.getElementById(hourId).value = hour;
+  document.getElementById(minuteId).value = minute;
+}
+
 // 計算実行
 function recalc() {
-  const startInput = document.getElementById('start');
-  const endInput = document.getElementById('end');
-  
-  // 画面表示用に時刻を整形（計算前）
-  const normalizedStart = normalizeTime(startInput.value);
-  const normalizedEnd = normalizeTime(endInput.value);
-  
-  // 整形した値を表示
-  if (startInput.value !== normalizedStart) {
-    startInput.value = normalizedStart;
-  }
-  
-  if (endInput.value !== normalizedEnd) {
-    endInput.value = normalizedEnd;
-  }
+  const startTime = getTimeFromSelects('start-hour', 'start-minute');
+  const endTime = getTimeFromSelects('end-hour', 'end-minute');
 
-  const startMin = toMinutes(normalizedStart);
-  const endMin = toMinutes(normalizedEnd);
+  const startMin = toMinutes(startTime);
+  const endMin = toMinutes(endTime);
 
   if (isNaN(startMin) || isNaN(endMin)) {
     document.getElementById('result').textContent = '時刻を正しく入力してください';
@@ -390,7 +424,8 @@ function handleTimeInput(e) {
 
 // イベントリスナーの設定
 document.addEventListener('DOMContentLoaded', () => {
-  // ローカルストレージの設定をロード
+  // 時間セレクトボックスの初期化
+  initializeTimeSelects();
   
   // ローカルストレージから設定を読み込む
   loadSettings();
@@ -401,14 +436,10 @@ document.addEventListener('DOMContentLoaded', () => {
     recalc();
   });
   
-  const timeInputs = document.querySelectorAll('#start, #end');
-  
-  // 時間入力フィールドの設定
-  timeInputs.forEach(input => {
-    // 入力中は数字のみを許可し、フォーマットはしない
-    input.addEventListener('input', handleTimeInput);
-    // フォーカスが外れたときだけフォーマットして計算
-    input.addEventListener('blur', recalc);
+  // 時間セレクトボックスの変更イベント
+  const timeSelects = document.querySelectorAll('#start-hour, #start-minute, #end-hour, #end-minute');
+  timeSelects.forEach(select => {
+    select.addEventListener('change', recalc);
   });
   
   // 月の稼働日数のデフォルト値を設定

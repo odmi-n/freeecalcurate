@@ -437,6 +437,34 @@ function recalc() {
   const slider = document.getElementById('work-days-range');
   if (slider) {
     slider.value = workDaysPerMonth;
+    
+    // スライダーのイベントリスナーを直接設定（毎回再設定する）
+    slider.addEventListener('input', function() {
+      console.log('スライダー値変更（recalcから）:', this.value);
+      const daysValue = this.value;
+      document.getElementById('work-days').value = daysValue;
+      
+      const valueDisplay = document.getElementById('work-days-value');
+      if (valueDisplay) {
+        valueDisplay.textContent = daysValue + '日';
+      }
+      
+      // その場で直接月収を再計算して表示を更新
+      const estimatedMonthlyIncome = totalWage * daysValue;
+      const incomeElement = document.querySelector('.bg-blue-50 .font-bold');
+      const daysInfoElement = document.querySelector('.bg-blue-50 .font-medium');
+      
+      if (incomeElement) {
+        incomeElement.textContent = formatCurrency(estimatedMonthlyIncome);
+      }
+      
+      if (daysInfoElement) {
+        daysInfoElement.textContent = `見込み月収（${daysValue}日/月）`;
+      }
+      
+      // ローカルストレージには保存する
+      saveSettings();
+    });
   }
   
   // 稼働日数スライダーの値表示を更新
@@ -498,22 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('end').value = '17:30';
   }
   
-  // 稼働日数スライダーのイベントリスナー設定
-  document.body.addEventListener('input', function(e) {
-    // イベント委任パターンを使用してスライダーの変更を検知
-    if (e.target && e.target.id === 'work-days-range') {
-      // スライダーの値を隠しフィールドに反映
-      const daysValue = e.target.value;
-      document.getElementById('work-days').value = daysValue;
-      
-      // 表示を更新
-      document.getElementById('work-days-value').textContent = daysValue + '日';
-      
-      // 既に計算済みの日次賃金から月収を直接計算してスムーズに更新
-      updateMonthlyIncome(daysValue);
-    }
-  });
-
   // 初期計算を実行（スクリーンショットに合わせるための再計算）
   recalc();
 });
@@ -531,14 +543,26 @@ function updateMonthlyIncome(workDaysPerMonth) {
   // 月収の計算
   const estimatedMonthlyIncome = totalDailyWage * workDaysPerMonth;
   
-  // 月収表示の要素を取得
-  const incomeElement = document.querySelector('.bg-blue-50 .font-bold');
-  const daysInfoElement = document.querySelector('.bg-blue-50 .font-medium');
+  // wage-result内の月収表示コンテナを取得
+  const wageResult = document.getElementById('wage-result');
   
-  if (incomeElement && daysInfoElement) {
-    // 月収表示を更新
-    incomeElement.textContent = formatCurrency(estimatedMonthlyIncome);
-    daysInfoElement.textContent = `見込み月収（${workDaysPerMonth}日/月）`;
+  if (wageResult) {
+    // 月収が表示されているコンテナを探す
+    const blueContainer = wageResult.querySelector('.bg-blue-50');
+    
+    if (blueContainer) {
+      // 月収金額と表示テキストを取得して更新
+      const incomeElement = blueContainer.querySelector('.font-bold');
+      const infoElement = blueContainer.querySelector('.font-medium');
+      
+      if (incomeElement) {
+        incomeElement.textContent = formatCurrency(estimatedMonthlyIncome);
+      }
+      
+      if (infoElement) {
+        infoElement.textContent = `見込み月収（${workDaysPerMonth}日/月）`;
+      }
+    }
   }
   
   // 設定をローカルストレージに保存

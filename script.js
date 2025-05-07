@@ -219,39 +219,29 @@ function saveSettings() {
   localStorage.setItem('workTimeSettings', JSON.stringify(settings));
 }
 
-// スライダーとセレクトボックスの同期
-function syncTimeControls(hourId, minuteId, hourSliderId, minuteSliderId, hourValueId, minuteValueId) {
-  const hourSelect = document.getElementById(hourId);
-  const minuteSelect = document.getElementById(minuteId);
-  const hourSlider = document.getElementById(hourSliderId);
-  const minuteSlider = document.getElementById(minuteSliderId);
-  const hourValue = document.getElementById(hourValueId);
-  const minuteValue = document.getElementById(minuteValueId);
+// スマホ用タイムピッカーとセレクトボックスの同期
+function syncTimePickerAndSelects(timeInputId, hourSelectId, minuteSelectId) {
+  const timeInput = document.getElementById(timeInputId);
+  const hourSelect = document.getElementById(hourSelectId);
+  const minuteSelect = document.getElementById(minuteSelectId);
 
-  // セレクトボックスからスライダーへの同期
-  hourSelect.addEventListener('change', () => {
-    hourSlider.value = hourSelect.value;
-    hourValue.textContent = hourSelect.value.padStart(2, '0');
-  });
+  // セレクトボックスからタイムピッカーへ
+  function updateTimeInput() {
+    const hour = hourSelect.value;
+    const minute = minuteSelect.value;
+    timeInput.value = `${hour}:${minute}`;
+  }
+  hourSelect.addEventListener('change', updateTimeInput);
+  minuteSelect.addEventListener('change', updateTimeInput);
 
-  minuteSelect.addEventListener('change', () => {
-    minuteSlider.value = minuteSelect.value;
-    minuteValue.textContent = minuteSelect.value.padStart(2, '0');
-  });
-
-  // スライダーからセレクトボックスへの同期
-  hourSlider.addEventListener('input', () => {
-    const value = hourSlider.value.padStart(2, '0');
-    hourSelect.value = value;
-    hourValue.textContent = value;
-    recalc();
-  });
-
-  minuteSlider.addEventListener('input', () => {
-    const value = minuteSlider.value.padStart(2, '0');
-    minuteSelect.value = value;
-    minuteValue.textContent = value;
-    recalc();
+  // タイムピッカーからセレクトボックスへ
+  timeInput.addEventListener('input', () => {
+    if (timeInput.value) {
+      const [hour, minute] = timeInput.value.split(':');
+      hourSelect.value = hour;
+      minuteSelect.value = minute;
+      recalc();
+    }
   });
 }
 
@@ -286,19 +276,22 @@ function initializeTimeSelects() {
   document.getElementById('end-hour').value = '17';
   document.getElementById('end-minute').value = '30';
 
-  // スライダーの初期値を設定
-  document.getElementById('start-hour-slider').value = 9;
-  document.getElementById('start-minute-slider').value = 0;
-  document.getElementById('end-hour-slider').value = 17;
-  document.getElementById('end-minute-slider').value = 30;
+  // スマホ用タイムピッカーとセレクトボックスの同期
+  syncTimePickerAndSelects('start-time-mobile', 'start-hour', 'start-minute');
+  syncTimePickerAndSelects('end-time-mobile', 'end-hour', 'end-minute');
 
-  // スライダーとセレクトボックスの同期を設定
-  syncTimeControls('start-hour', 'start-minute', 'start-hour-slider', 'start-minute-slider', 'start-hour-value', 'start-minute-value');
-  syncTimeControls('end-hour', 'end-minute', 'end-hour-slider', 'end-minute-slider', 'end-hour-value', 'end-minute-value');
+  // タイムピッカーの初期値も設定
+  document.getElementById('start-time-mobile').value = '09:00';
+  document.getElementById('end-time-mobile').value = '17:30';
 }
 
 // セレクトボックスから時間文字列を取得
-function getTimeFromSelects(hourId, minuteId) {
+function getTimeFromSelects(hourId, minuteId, mobileId) {
+  const mobileInput = document.getElementById(mobileId);
+  // スマホ表示時はinput[type=time]の値を優先
+  if (window.innerWidth < 768 && mobileInput && mobileInput.value) {
+    return mobileInput.value;
+  }
   const hour = document.getElementById(hourId).value;
   const minute = document.getElementById(minuteId).value;
   return `${hour}:${minute}`;
@@ -314,8 +307,8 @@ function setTimeToSelects(timeStr, hourId, minuteId) {
 
 // 計算実行
 function recalc() {
-  const startTime = getTimeFromSelects('start-hour', 'start-minute');
-  const endTime = getTimeFromSelects('end-hour', 'end-minute');
+  const startTime = getTimeFromSelects('start-hour', 'start-minute', 'start-time-mobile');
+  const endTime = getTimeFromSelects('end-hour', 'end-minute', 'end-time-mobile');
 
   const startMin = toMinutes(startTime);
   const endMin = toMinutes(endTime);
@@ -487,6 +480,10 @@ document.addEventListener('DOMContentLoaded', () => {
   timeSelects.forEach(select => {
     select.addEventListener('change', recalc);
   });
+  
+  // スマホ用タイムピッカーの変更イベント
+  document.getElementById('start-time-mobile').addEventListener('input', recalc);
+  document.getElementById('end-time-mobile').addEventListener('input', recalc);
   
   // 月の稼働日数のデフォルト値を設定
   if (!document.getElementById('work-days').value) {

@@ -88,18 +88,9 @@
               <!-- JavaScriptで動的に生成 -->
             </select>
           </div>
-          <!-- スマートフォン用のスライダー -->
+          <!-- スマートフォン用のタイムピッカー -->
           <div class="md:hidden mt-4">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-gray-700">時間</span>
-              <span id="start-hour-value" class="text-sm font-medium text-primary">09</span>
-            </div>
-            <input type="range" id="start-hour-slider" min="0" max="23" value="9" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-            <div class="flex items-center justify-between mb-2 mt-4">
-              <span class="text-sm font-medium text-gray-700">分</span>
-              <span id="start-minute-value" class="text-sm font-medium text-primary">00</span>
-            </div>
-            <input type="range" id="start-minute-slider" min="0" max="59" value="0" step="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            <input type="time" id="start-time-mobile" class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm">
           </div>
         </div>
 
@@ -113,18 +104,9 @@
               <!-- JavaScriptで動的に生成 -->
             </select>
           </div>
-          <!-- スマートフォン用のスライダー -->
+          <!-- スマートフォン用のタイムピッカー -->
           <div class="md:hidden mt-4">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-gray-700">時間</span>
-              <span id="end-hour-value" class="text-sm font-medium text-primary">17</span>
-            </div>
-            <input type="range" id="end-hour-slider" min="0" max="23" value="17" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-            <div class="flex items-center justify-between mb-2 mt-4">
-              <span class="text-sm font-medium text-gray-700">分</span>
-              <span id="end-minute-value" class="text-sm font-medium text-primary">30</span>
-            </div>
-            <input type="range" id="end-minute-slider" min="0" max="59" value="30" step="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            <input type="time" id="end-time-mobile" class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm">
           </div>
         </div>
       </div>

@@ -1,25 +1,3 @@
-// 入力を「1300 → 13:00」のように整形
-function normalizeTime(str) {
-  str = (str || '').trim();
-  if (!str) return '';
-  if (/^\d{1,2}:\d{2}$/.test(str)) return str; // 既に HH:MM 形式
-  const digits = str.replace(/\D/g, '');
-  if (digits.length === 3) {
-    // 915 → 0915
-    return digits.padStart(4, '0').replace(/(\d{2})(\d{2})/, '$1:$2');
-  }
-  if (digits.length === 4) {
-    // 1300 → 13:00
-    return digits.replace(/(\d{2})(\d{2})/, '$1:$2');
-  }
-  if (digits.length <= 2) {
-    // 9 → 09:00
-    return digits.padStart(2, '0') + ':00';
-  }
-  // 不正な入力
-  return '';
-}
-
 // HH:MM → 分
 function toMinutes(timeStr) {
   if (!/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
@@ -477,18 +455,6 @@ function recalc() {
   saveSettings();
 }
 
-// 数字のみを入力できるようにする
-function handleTimeInput(e) {
-  const input = e.target;
-  // 数字のみ許可（バックスペース等のキーも許可）
-  const isNumeric = /^\d*$/.test(input.value);
-  
-  if (!isNumeric) {
-    // 数字以外の文字を削除
-    input.value = input.value.replace(/\D/g, '');
-  }
-}
-
 // イベントリスナーの設定
 document.addEventListener('DOMContentLoaded', () => {
   // 時間セレクトボックスの初期化
@@ -518,54 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('work-days').value = 8;
   }
   
-  // 出勤・退勤時間のデフォルト値を設定（空の場合）
-  if (!document.getElementById('start').value) {
-    document.getElementById('start').value = '09:00';
-  }
-  if (!document.getElementById('end').value) {
-    document.getElementById('end').value = '17:30';
-  }
-  
   // 初期計算を実行（スクリーンショットに合わせるための再計算）
   recalc();
 });
-
-// 月収の直接更新（スライダー操作時の軽量更新用）
-function updateMonthlyIncome(workDaysPerMonth) {
-  // 現在の日次賃金を集計
-  let totalDailyWage = 0;
-  document.querySelectorAll('.task-row').forEach(row => {
-    const minutes = parseInt(row.querySelector('.task-minutes').value) || 0;
-    const rate = parseInt(row.querySelector('.task-rate').value) || 0;
-    totalDailyWage += (minutes / 60) * rate;
-  });
-  
-  // 月収の計算
-  const estimatedMonthlyIncome = totalDailyWage * workDaysPerMonth;
-  
-  // wage-result内の月収表示コンテナを取得
-  const wageResult = document.getElementById('wage-result');
-  
-  if (wageResult) {
-    // 月収が表示されているコンテナを探す
-    const blueContainer = wageResult.querySelector('.bg-blue-50');
-    
-    if (blueContainer) {
-      // 月収金額と表示テキストを取得して更新
-      const incomeElement = blueContainer.querySelector('.font-bold');
-      const infoElement = blueContainer.querySelector('.font-medium');
-      
-      if (incomeElement) {
-        incomeElement.textContent = formatCurrency(estimatedMonthlyIncome);
-      }
-      
-      if (infoElement) {
-        infoElement.textContent = `見込み月収（${workDaysPerMonth}日/月）`;
-      }
-    }
-  }
-  
-  // 設定をローカルストレージに保存
-  saveSettings();
-}
 

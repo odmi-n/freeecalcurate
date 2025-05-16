@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤怠管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="config.js"></script>
+    <script src="shitfreee.js"></script>
+    <style>
+        /* カスタムスタイル */
+        .triangle-down {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 20px solid #ffffff; /* 背景色に合わせて調整 */
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+    <header class="bg-white shadow-md relative">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="w-32">
+                    <div id="current-location" class="text-sm text-gray-700"></div>
+                </div>
+                <div class="flex-1 text-center px-4">
+                    <div id="current-date" class="text-lg font-semibold text-gray-800"></div>
+                    <div id="current-time" class="text-3xl font-bold text-gray-900"></div>
+                </div>
+                <div class="w-32"></div>
+            </div>
+        </div>
+        <div class="triangle-down"></div>
+    </header>
+
+    <main class="flex-grow bg-gray-700 flex flex-col items-center pt-6 pb-4">
+        <div class="text-center w-full max-w-4xl px-4">
+            <h1 class="text-2xl font-bold text-white mb-6">リアルタイム打刻</h1>
+
+            <div class="flex flex-wrap justify-center items-center px-4 sm:px-0 sm:flex-nowrap sm:justify-center sm:space-x-4 mb-6">
+                <button id="check-in-btn" class="bg-teal-400 hover:bg-teal-500 text-white font-bold py-4 px-8 rounded-lg shadow-lg flex items-center justify-center text-xl w-auto mb-4 sm:mb-0 order-1 sm:order-1 flex-1 sm:flex-none mr-2 sm:mr-0">
+                    <i class="fas fa-arrow-up mr-2 text-2xl"></i><span class="whitespace-nowrap">出勤</span>
+                </button>
+                <button id="checkpoint-btn" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-4 px-8 rounded-lg shadow-lg flex items-center justify-center text-xl w-full sm:w-auto mb-4 sm:mb-0 order-3 sm:order-2">
+                    <i class="fas fa-map-marker-alt mr-2 text-2xl"></i><span class="whitespace-nowrap">チェックポイント</span>
+                </button>
+                <button id="check-out-btn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg flex items-center justify-center text-xl w-auto mb-4 sm:mb-0 order-2 sm:order-3 flex-1 sm:flex-none ml-2 sm:ml-0">
+                    <i class="fas fa-arrow-down mr-2 text-2xl"></i><span class="whitespace-nowrap">退勤</span>
+                </button>
+            </div>
+
+            <!-- タイムカード表示エリア -->
+            <div id="timecard" class="bg-gray-800 rounded-lg p-5 mb-6 hidden">
+                <h2 class="text-xl font-bold text-white mb-4">タイムカード</h2>
+                <div id="check-in-record" class="text-white text-left mb-3 hidden">
+                    <div class="flex justify-between items-center">
+                        <div><i class="fas fa-arrow-up text-teal-400 mr-2"></i><span>出勤</span></div>
+                        <div id="check-in-time" class="font-semibold"></div>
+                    </div>
+                    <div id="check-in-location" class="text-gray-400 text-sm ml-6"></div>
+                </div>
+                
+                <!-- チェックポイントリスト -->
+                <div id="checkpoint-list" class="text-white"></div>
+                
+                <div id="check-out-record" class="text-white text-left my-3 hidden">
+                    <div class="flex justify-between items-center">
+                        <div><i class="fas fa-arrow-down text-pink-500 mr-2"></i><span>退勤</span></div>
+                        <div id="check-out-time" class="font-semibold"></div>
+                    </div>
+                    <div id="check-out-location" class="text-gray-400 text-sm ml-6"></div>
+                </div>
+                
+                <!-- 業務時間集計はここに動的に追加されます -->
+            </div>
+
+            <p id="location-status" class="text-gray-400 mt-4 text-sm">端末の位置情報利用が許可されていません。</p>
+            <p id="timer-status" class="text-white mt-2 text-lg hidden">経過時間: <span id="elapsed-time">00:00</span></p>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-center py-4">
+        <p class="text-xs text-gray-400">&copy; freee K.K.</p>
+    </footer>
+</body>
+</html>

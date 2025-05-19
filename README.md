@@ -3,4 +3,4 @@
 
 corsproxy.ioで位置情報を取得。
 
-https://x.gd/A7SS7 で公開しています。
+ https://odmi-n.github.io/freeecalcurate/ で公開しています。

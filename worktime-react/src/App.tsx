@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import WorkTimeCalculator from './pages/WorkTimeCalculator';
 import AttendanceTracker from './pages/AttendanceTracker';
 

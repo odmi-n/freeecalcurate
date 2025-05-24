@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* カスタムスタイル（既存HTMLからの移植） */
+
+/* スライダーのスタイル調整 */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+}
+
+input[type=range]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+}
+
+/* 単位をフォームの右に配置 */
+.input-with-unit {
+  position: relative;
+}
+
+.unit {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+.input-with-unit input {
+  padding-right: 30px;
+}
+
+/* モバイル向け調整 */
+@media (max-width: 768px) {
+  .task-row {
+    padding-bottom: 24px;
+    margin-bottom: 20px;
+    border-bottom-width: 1px;
+  }
+  
+  .task-type-container {
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  
+  .task-minutes-container {
+    margin-bottom: 16px;
+  }
+  
+  .hourly-rate-container {
+    margin-top: 8px;
+    width: 100%;
+  }
+}
+
+.hidden-mobile { 
+  display: block; 
+}
+
+@media (max-width: 767px) { 
+  .hidden-mobile { 
+    display: none !important; 
+  } 
+}
+
+/* リアルタイム打刻用の三角形スタイル */
+.triangle-down {
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid #ffffff;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
